@@ -30,7 +30,7 @@ npm run db:seed
 
 WebUI: `http://localhost:3000`; API: `http://localhost:4000`; Swagger: `http://localhost:4000/docs`.
 
-Tài khoản seed development: `admin@example.com` / `admin123`. Không dùng credential này ở production.
+Tài khoản seed development: `admin@example.com`. Đặt `ADMIN_SEED_PASSWORD` tối thiểu 12 ký tự trong `.env` trước khi chạy `npm run db:seed`; không dùng lại mật khẩu này ở production.
 
 ## Webhook
 
