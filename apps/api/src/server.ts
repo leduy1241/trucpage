@@ -1,0 +1,11 @@
+import dotenv from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { buildApp } from "./app.js";
+import { getEnv } from "./config/env.js";
+const localEnv=resolve(process.cwd(),".env");
+const rootEnv=resolve(process.cwd(),"../../.env");
+dotenv.config({path:existsSync(localEnv)?localEnv:rootEnv});
+const env=getEnv();
+const app=await buildApp();
+await app.listen({port:env.PORT,host:"0.0.0.0"});

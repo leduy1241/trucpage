@@ -1,0 +1,18 @@
+{
+  "name": "ai-page-operator",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:web dev:api",
+    "dev:web": "npm --workspace @apo/web run dev",
+    "dev:api": "npm --workspace @apo/api run dev",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:generate": "npm --workspace @apo/db run generate",
+    "db:migrate": "npm --workspace @apo/db run migrate",
+    "db:seed": "npm --workspace @apo/db run seed"
+  },
+  "devDependencies": { "dotenv-cli": "^8.0.0", "npm-run-all": "^4.1.5" },
+  "workspaces": ["apps/*", "packages/*"]
+}

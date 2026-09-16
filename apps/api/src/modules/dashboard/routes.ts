@@ -1,0 +1,3 @@
+import type {FastifyInstance} from "fastify";
+import {db} from "@apo/db";
+export async function dashboardRoutes(app:FastifyInstance){app.get("/dashboard/summary",async()=>{const since=new Date();since.setHours(0,0,0,0);const [messages,aiReplies,orderIntents,failedAi,human]=await Promise.all([db.message.count({where:{createdAt:{gte:since}}}),db.message.count({where:{createdAt:{gte:since},senderType:"AI"}}),db.orderIntent.count({where:{createdAt:{gte:since}}}),db.aIExecution.count({where:{createdAt:{gte:since},error:{not:null}}}),db.conversation.count({where:{mode:"HUMAN"}})]);return {messages,aiReplies,orderIntents,failedAi,human};});}

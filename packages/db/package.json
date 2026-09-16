@@ -1,0 +1,7 @@
+{
+  "name":"@apo/db","version":"0.1.0","type":"module","main":"src/index.ts",
+  "scripts":{"generate":"dotenv -e ../../.env -- prisma generate","migrate":"dotenv -e ../../.env -- prisma migrate dev","seed":"dotenv -e ../../.env -- tsx prisma/seed.ts","typecheck":"tsc --noEmit"},
+  "dependencies":{"@prisma/client":"^6.2.1","bcryptjs":"^2.4.3"},
+  "devDependencies":{"dotenv-cli":"^8.0.0","prisma":"^6.2.1","tsx":"^4.19.2","typescript":"^5.7.3","@types/bcryptjs":"^2.4.6"},
+  "prisma":{"seed":"tsx prisma/seed.ts"}
+}

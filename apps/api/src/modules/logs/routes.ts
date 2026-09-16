@@ -1,0 +1,3 @@
+import type {FastifyInstance} from "fastify";
+import {db} from "@apo/db";
+export async function logRoutes(app:FastifyInstance){app.get("/webhook-events",async()=>db.webhookEvent.findMany({orderBy:{createdAt:"desc"},take:100,select:{id:true,eventType:true,status:true,error:true,createdAt:true,page:{select:{name:true}}}}));app.get("/ai/executions",async()=>db.aIExecution.findMany({orderBy:{createdAt:"desc"},take:100,select:{id:true,provider:true,model:true,inputText:true,outputText:true,error:true,latencyMs:true,createdAt:true,conversationId:true}}));app.get("/outbound-messages",async()=>db.outboundMessage.findMany({orderBy:{createdAt:"desc"},take:100}));}

@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AIProvider {
+  DEEPSEEK
+  OPENAI
+  ANTHROPIC
+}
+enum ConversationType {
+  INBOX
+  COMMENT
+}
+enum ConversationMode {
+  AI
+  HUMAN
+  PAUSED
+}
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+enum SenderType {
+  CUSTOMER
+  HUMAN
+  AI
+  SYSTEM
+}
+enum EventStatus {
+  RECEIVED
+  IGNORED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+enum OutboundStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  name String
+  role String @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Page {
+  id String @id @default(cuid())
+  platform String @default("PANCAKE")
+  platformPageId String @unique
+  name String
+  active Boolean @default(true)
+  aiEnabled Boolean @default(true)
+  provider AIProvider @default(OPENAI)
+  model String @default("gpt-4o-mini")
+  systemPrompt String @default("")
+  debounceSeconds Int @default(5)
+  responseDelaySeconds Int @default(2)
+  maxResponseChunks Int @default(3)
+  contextWindow Int @default(30)
+  autoReplyInbox Boolean @default(true)
+  autoReplyComment Boolean @default(true)
+  autoPrivateReply Boolean @default(true)
+  humanTakeoverMinutes Int @default(30)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  secret PageSecret?
+  rule PageRule?
+  products Product[]
+  conversations Conversation[]
+  webhookEvents WebhookEvent[]
+}
+
+model PageSecret {
+  id String @id @default(cuid())
+  pageId String @unique
+  page Page @relation(fields:[pageId], references:[id], onDelete:Cascade)
+  encryptedPageAccessToken String
+  encryptedGlobalAccessToken String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PageRule {
+  id String @id @default(cuid())
+  pageId String @unique
+  page Page @relation(fields:[pageId], references:[id], onDelete:Cascade)
+  excludedTagIds Json @default("[]")
+  orderTagId String?
+  negativeTagId String?
+  highPriorityTagId String?
+}
+
+model Product {
+  id String @id @default(cuid())
+  pageId String
+  page Page @relation(fields:[pageId], references:[id], onDelete:Cascade)
+  sku String
+  name String
+  active Boolean @default(true)
+  price Decimal @db.Decimal(14,2)
+  promo String?
+  description String?
+  usage String?
+  faq Json @default("[]")
+  metadata Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assetGroups AssetGroup[]
+  @@unique([pageId, sku])
+}
+
+model AssetGroup {
+  id String @id @default(cuid())
+  pageId String
+  productId String?
+  product Product? @relation(fields:[productId], references:[id], onDelete:SetNull)
+  name String
+  active Boolean @default(true)
+  assets Asset[]
+}
+
+model Asset {
+  id String @id @default(cuid())
+  assetGroupId String
+  assetGroup AssetGroup @relation(fields:[assetGroupId], references:[id], onDelete:Cascade)
+  type String @default("IMAGE")
+  pancakeContentId String?
+  pancakeAttachmentId String?
+  url String
+  sortOrder Int @default(0)
+}
+
+model Conversation {
+  id String @id @default(cuid())
+  pageId String
+  page Page @relation(fields:[pageId], references:[id], onDelete:Cascade)
+  platformConversationId String
+  customerPlatformId String
+  customerName String?
+  type ConversationType
+  mode ConversationMode @default(AI)
+  pauseUntil DateTime?
+  lastMessageAt DateTime
+  lastAiReplyAt DateTime?
+  tags Json @default("[]")
+  metadata Json @default("{}")
+  messages Message[]
+  aiExecutions AIExecution[]
+  outboundMessages OutboundMessage[]
+  orderIntents OrderIntent[]
+  @@unique([pageId, platformConversationId])
+}
+
+model Message {
+  id String @id @default(cuid())
+  conversationId String
+  conversation Conversation @relation(fields:[conversationId], references:[id], onDelete:Cascade)
+  platformMessageId String @unique
+  direction MessageDirection
+  senderType SenderType
+  senderName String?
+  text String
+  rawPayload Json
+  processed Boolean @default(false)
+  createdAt DateTime
+  @@index([conversationId, createdAt])
+  @@index([processed, conversationId])
+}
+
+model Customer {
+  id String @id @default(cuid())
+  pageId String
+  platformCustomerId String
+  name String?
+  phone String?
+  address String?
+  notes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders Order[]
+  orderIntents OrderIntent[]
+  @@unique([pageId, platformCustomerId])
+}
+
+model Order {
+  id String @id @default(cuid())
+  pageId String
+  customerId String
+  customer Customer @relation(fields:[customerId], references:[id])
+  code String @unique
+  status String
+  shipmentStatus String?
+  trackingCode String?
+  total Decimal? @db.Decimal(14,2)
+  cod Decimal? @db.Decimal(14,2)
+  items Json
+  raw Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderIntent {
+  id String @id @default(cuid())
+  conversationId String
+  conversation Conversation @relation(fields:[conversationId], references:[id])
+  customerId String?
+  customer Customer? @relation(fields:[customerId], references:[id])
+  phone String
+  address String
+  customerName String?
+  status String @default("AI_QUALIFIED")
+  aiReason String?
+  createdAt DateTime @default(now())
+}
+
+model WebhookEvent {
+  id String @id @default(cuid())
+  requestId String? @unique
+  pageId String?
+  page Page? @relation(fields:[pageId], references:[id])
+  eventType String
+  status EventStatus @default(RECEIVED)
+  rawPayload Json
+  error String?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}
+
+model AIExecution {
+  id String @id @default(cuid())
+  pageId String
+  conversationId String
+  conversation Conversation @relation(fields:[conversationId], references:[id])
+  provider String
+  model String
+  inputText String
+  outputText String?
+  actions Json @default("[]")
+  latencyMs Int?
+  inputTokens Int?
+  outputTokens Int?
+  estimatedCost Decimal? @db.Decimal(14,6)
+  error String?
+  createdAt DateTime @default(now())
+  tools ToolExecution[]
+}
+
+model ToolExecution {
+  id String @id @default(cuid())
+  aiExecutionId String
+  aiExecution AIExecution @relation(fields:[aiExecutionId], references:[id], onDelete:Cascade)
+  toolName String
+  input Json
+  output Json?
+  success Boolean
+  latencyMs Int
+  error String?
+}
+
+model OutboundMessage {
+  id String @id @default(cuid())
+  conversationId String
+  conversation Conversation @relation(fields:[conversationId], references:[id])
+  text String
+  platformMessageId String?
+  status OutboundStatus @default(PENDING)
+  attempts Int @default(0)
+  error String?
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+}

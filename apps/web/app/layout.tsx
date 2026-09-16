@@ -1,0 +1,3 @@
+import "./globals.css";
+export const metadata={title:"AI Page Operator",description:"AI trực Page & hỗ trợ chốt đơn"};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="vi"><body><div className="shell"><aside className="sidebar"><div className="brand">AI Page Operator</div><div className="subtitle">AI trực Page & hỗ trợ chốt đơn</div><nav className="nav"><a href="/">Tổng quan</a><a href="/pages">Pages</a><a href="/conversations">Hội thoại</a><a href="/products">Sản phẩm</a><a href="/playground">AI Playground</a><a href="/logs">Nhật ký</a></nav></aside><main className="main">{children}</main></div></body></html>}
